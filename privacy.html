@@ -70,3 +70,465 @@
   </p>
 </body>
 </html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+ye runable cod hai
+arrow app ka 
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <title>Archery Game</title>
+  <style>
+    /* Base reset and style */
+    body {
+      margin: 0;
+      overflow: hidden;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(to bottom, #87cefa, #ffffff);
+      user-select: none;
+    }
+
+    canvas {
+      display: block;
+      background: transparent;
+    }
+
+    /* Scoreboard container for desktop/tablet */
+    .scoreboard-container {
+      position: fixed;
+      top: 1.5vh;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 3vw;
+      background: rgba(0, 0, 0, 0.6);
+      padding: 1vh 3vw;
+      border-radius: 3vh;
+      box-shadow: 0 0 1.5vh rgba(0, 0, 0, 0.7);
+      z-index: 1000;
+      user-select: none;
+      max-width: 90vw;
+      font-size: 2.5vh;
+      transition: all 0.3s ease;
+    }
+
+    /* Boxes inside the scoreboard */
+    .scoreboard-box {
+      color: white;
+      font-weight: 700;
+      text-align: center;
+      text-shadow: 0 0 0.5vh #ff0;
+      min-width: 15vw;
+      line-height: 1.2;
+    }
+
+    .scoreboard-box span {
+      display: block;
+      font-size: 3.5vh;
+      font-weight: 900;
+      color: #ffdd57;
+      animation: pop 0.3s ease-out;
+      user-select: text;
+    }
+
+    /* Pop animation for score updates */
+    @keyframes pop {
+      0% { transform: scale(1.4); }
+      100% { transform: scale(1); }
+    }
+
+    /* Phone-specific scoreboard style */
+    @media (max-width: 600px) {
+      .scoreboard-container {
+        top: 1vh;
+        left: 1vw;
+        transform: none;
+        flex-direction: column;
+        gap: 0.5vh;
+        background: transparent;
+        padding: 0;
+        box-shadow: none;
+        font-size: 3.5vw;
+        max-width: auto;
+        z-index: 9999;
+      }
+
+      .scoreboard-box {
+        min-width: auto;
+        width: auto;
+        font-weight: 600;
+        color: #fff;
+        text-shadow: none;
+        text-align: left;
+        line-height: 1.1;
+      }
+
+      .scoreboard-box span {
+        font-size: 4vw;
+        font-weight: 700;
+        color: #ffd700;
+        animation: none;
+      }
+    }
+
+    /* Game Over modal */
+    #gameOver {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: rgba(0, 0, 0, 0.85);
+      color: white;
+      padding: 40px 50px;
+      border-radius: 20px;
+      text-align: center;
+      display: none;
+      z-index: 1001;
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      box-shadow: 0 0 25px #000;
+      user-select: none;
+    }
+
+    #gameOver h2 {
+      font-size: 3.5vh;
+      margin: 0 0 20px 0;
+      text-shadow: 0 0 10px #ff4444;
+    }
+
+    #gameOver button {
+      margin-top: 20px;
+      font-size: 2.5vh;
+      padding: 12px 30px;
+      background-color: #28a745;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      box-shadow: 0 0 15px #28a745aa;
+      transition: background-color 0.3s ease;
+      user-select: none;
+    }
+
+    #gameOver button:hover {
+      background-color: #1f7a32;
+    }
+
+    /* Pause button styling */
+    #pauseButton {
+      position: fixed;
+      bottom: 20px;
+      left: 20px;
+      font-size: 2.5vh;
+      background: #222;
+      color: white;
+      border: none;
+      border-radius: 12px;
+      padding: 10px 22px;
+      cursor: pointer;
+      z-index: 1000;
+      user-select: none;
+      box-shadow: 0 0 15px #000;
+      transition: background-color 0.3s ease;
+    }
+
+    #pauseButton:hover {
+      background-color: #444;
+    }
+
+    /* Responsive font for pause button on small devices */
+    @media (max-width: 600px) {
+      #pauseButton {
+        font-size: 4vw;
+        padding: 8px 18px;
+        bottom: 15px;
+        left: 15px;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Scoreboard -->
+  <div class="scoreboard-container" aria-label="Game scoreboard">
+    <div class="scoreboard-box" role="status">Score<br><span id="scoreValue">0</span></div>
+    <div class="scoreboard-box" role="status">Level<br><span id="levelValue">0</span></div>
+    <div class="scoreboard-box" role="status">High Score<br><span id="highScoreValue">0</span></div>
+  </div>
+
+  <!-- Game Over modal -->
+  <div id="gameOver" role="alert" aria-live="assertive" aria-atomic="true">
+    <h2>Game Over</h2>
+    <button onclick="restartGame()" aria-label="Restart game">Try Again</button>
+  </div>
+
+  <!-- Pause button -->
+  <button id="pauseButton" aria-pressed="false" aria-label="Pause game">⏸ Pause</button>
+
+  <!-- Game canvas -->
+  <canvas id="gameCanvas" tabindex="0" aria-label="Archery game playing area"></canvas>
+
+  <script>
+    const canvas = document.getElementById("gameCanvas");
+    const ctx = canvas.getContext("2d");
+
+    let w = window.innerWidth;
+    let h = window.innerHeight;
+    canvas.width = w;
+    canvas.height = h;
+
+    let arrows = [];
+    let balls = [];
+    let score = 0;
+    let highScore = 0;
+    let level = 0;
+    let isPaused = false;
+    let isGameOver = false;
+    let baseSpeed = 3;
+    let speed = baseSpeed;
+
+    const scoreValue = document.getElementById("scoreValue");
+    const levelValue = document.getElementById("levelValue");
+    const highScoreValue = document.getElementById("highScoreValue");
+    const gameOverDisplay = document.getElementById("gameOver");
+    const pauseButton = document.getElementById("pauseButton");
+
+    // Audio context and sound functions
+    const AudioContext = window.AudioContext || window.webkitAudioContext;
+    const audioCtx = new AudioContext();
+
+    function playSound(freq, duration = 0.1, type = 'sine', volume = 0.2) {
+      const oscillator = audioCtx.createOscillator();
+      const gainNode = audioCtx.createGain();
+
+      oscillator.type = type;
+      oscillator.frequency.setValueAtTime(freq, audioCtx.currentTime);
+
+      gainNode.gain.setValueAtTime(volume, audioCtx.currentTime);
+      gainNode.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + duration);
+
+      oscillator.connect(gainNode);
+      gainNode.connect(audioCtx.destination);
+
+      oscillator.start();
+      oscillator.stop(audioCtx.currentTime + duration);
+    }
+
+    function playShootSound() {
+      playSound(800, 0.07, 'triangle', 0.15);
+    }
+
+    function playHitSound(color) {
+      if(color === 'yellow'){
+        // higher pitch, shorter
+        playSound(1200, 0.05, 'square', 0.2);
+      } else {
+        // lower pitch, longer
+        playSound(400, 0.15, 'sawtooth', 0.3);
+      }
+    }
+
+    function playGameOverSound() {
+      // descending tones
+      let time = audioCtx.currentTime;
+      for(let i = 0; i < 3; i++) {
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+        oscillator.type = 'triangle';
+        oscillator.frequency.setValueAtTime(600 - i*150, time + i*0.2);
+        gainNode.gain.setValueAtTime(0.25, time + i*0.2);
+        gainNode.gain.exponentialRampToValueAtTime(0.001, time + i*0.2 + 0.15);
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+        oscillator.start(time + i*0.2);
+        oscillator.stop(time + i*0.2 + 0.15);
+      }
+    }
+
+    function drawBall(ball) {
+      let gradient = ctx.createRadialGradient(
+        ball.x - ball.radius / 3,
+        ball.y - ball.radius / 3,
+        ball.radius / 6,
+        ball.x,
+        ball.y,
+        ball.radius
+      );
+      gradient.addColorStop(0, ball.color === 'red' ? '#ff6666' : '#ffff99');
+      gradient.addColorStop(0.6, ball.color);
+      gradient.addColorStop(1, ball.color === 'red' ? '#660000' : '#666600');
+      ctx.fillStyle = gradient;
+      ctx.beginPath();
+      ctx.arc(ball.x, ball.y, ball.radius, 0, Math.PI * 2);
+      ctx.fill();
+
+      ctx.beginPath();
+      let highlightRadius = ball.radius / 3;
+      ctx.arc(ball.x - highlightRadius / 2, ball.y - highlightRadius / 2, highlightRadius, 0, Math.PI * 2);
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      ctx.fill();
+    }
+
+    function shootArrow(y) {
+      if (!isPaused && !isGameOver) {
+        // Resume audio context if suspended (required by some browsers)
+        if (audioCtx.state === 'suspended') {
+          audioCtx.resume();
+        }
+        playShootSound();
+        arrows.push({ x: 50, y: y, length: 40 });
+      }
+    }
+
+    function spawnBall() {
+      let y = Math.random() * (h - 60) + 30;
+      let color = Math.random() < 0.3 ? 'yellow' : 'red';
+      balls.push({ x: w + 30, y, radius: 20, color });
+    }
+
+    function drawArrows() {
+      ctx.strokeStyle = "black";
+      ctx.lineWidth = 4;
+      arrows.forEach(arrow => {
+        ctx.beginPath();
+        ctx.moveTo(arrow.x, arrow.y);
+        ctx.lineTo(arrow.x + arrow.length, arrow.y);
+        ctx.stroke();
+
+        ctx.beginPath();
+        ctx.moveTo(arrow.x + arrow.length, arrow.y);
+        ctx.lineTo(arrow.x + arrow.length - 10, arrow.y - 5);
+        ctx.lineTo(arrow.x + arrow.length - 10, arrow.y + 5);
+        ctx.closePath();
+        ctx.fillStyle = "black";
+        ctx.fill();
+      });
+    }
+
+    function updateGame() {
+      if (isPaused || isGameOver) return;
+
+      ctx.clearRect(0, 0, w, h);
+
+      arrows.forEach(arrow => arrow.x += 10);
+      speed = baseSpeed * Math.pow(1.3, level);
+      balls.forEach(ball => ball.x -= speed);
+
+      drawArrows();
+      balls.forEach(drawBall);
+
+      // Collisions
+      for (let i = arrows.length - 1; i >= 0; i--) {
+        for (let j = balls.length - 1; j >= 0; j--) {
+          let arrow = arrows[i];
+          let ball = balls[j];
+          let dx = (arrow.x + arrow.length) - ball.x;
+          let dy = arrow.y - ball.y;
+          if (Math.sqrt(dx * dx + dy * dy) < ball.radius) {
+            score += ball.color === 'yellow' ? 50 : 10;
+            if (score > highScore) highScore = score;
+            arrows.splice(i, 1);
+            balls.splice(j, 1);
+            playHitSound(ball.color);
+            updateUI();
+            break;
+          }
+        }
+      }
+
+      for (let ball of balls) {
+        if (ball.x - ball.radius < 0) {
+          endGame();
+          break;
+        }
+      }
+
+      let newLevel = Math.floor(score / 200);
+      if (newLevel > level) {
+        level = newLevel;
+        updateUI();
+      }
+
+      requestAnimationFrame(updateGame);
+    }
+
+    function updateUI() {
+      scoreValue.textContent = score;
+      levelValue.textContent = level;
+      highScoreValue.textContent = highScore;
+
+      if (window.innerWidth > 600) {
+        [scoreValue, levelValue, highScoreValue].forEach(span => {
+          span.style.animation = "none";
+          void span.offsetHeight;
+          span.style.animation = "pop 0.3s ease-out";
+        });
+      }
+    }
+
+    function endGame() {
+      isGameOver = true;
+      gameOverDisplay.style.display = "block";
+      pauseButton.setAttribute('aria-pressed', 'true');
+      playGameOverSound();
+    }
+
+    function restartGame() {
+      isGameOver = false;
+      score = 0;
+      level = 0;
+      arrows = [];
+      balls = [];
+      gameOverDisplay.style.display = "none";
+      pauseButton.setAttribute('aria-pressed', 'false');
+      updateUI();
+      updateGame();
+    }
+
+    canvas.addEventListener("click", e => shootArrow(e.clientY));
+
+    setInterval(() => {
+      if (!isPaused && !isGameOver) spawnBall();
+    }, 1000);
+
+    pauseButton.addEventListener("click", () => {
+      isPaused = !isPaused;
+      pauseButton.textContent = isPaused ? "▶ Resume" : "⏸ Pause";
+      pauseButton.setAttribute('aria-pressed', isPaused.toString());
+      if (!isPaused && !isGameOver) updateGame();
+    });
+
+    window.addEventListener("resize", () => {
+      w = window.innerWidth;
+      h = window.innerHeight;
+      canvas.width = w;
+      canvas.height = h;
+    });
+
+    updateGame();
+  </script>
+
+</body>
+</html>
